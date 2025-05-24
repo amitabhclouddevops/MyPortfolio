@@ -1,31 +1,29 @@
 // Wait for the DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize particles.js
+    // Start with the loading screen animation
+    addPageLoadingAnimation();
+    
+    // Initialize the rest of the site functionality immediately
     initParticles();
-
-    // Initialize typewriter effect
     initTypewriter();
-
-    // Handle navigation highlighting
     handleNavigation();
-
-    // Handle scroll events
     handleScroll();
-
-    // Add floating animation to profile picture
     animateProfilePicture();
-
-    // Initialize mobile menu
     initMobileMenu();
-
-    // Initialize smooth scrolling
     initSmoothScrolling();
-
-    // Trigger initial reveal of elements
-    setTimeout(revealElements, 100);
-
-    // Add CSS variables for staggered animations
-    addCssVariables();
+    initBackToTop();
+    
+    // These functions will be executed after the loading screen is hidden
+    setTimeout(() => {
+        // Trigger reveal of elements
+        revealElements();
+        
+        // Add CSS variables for staggered animations
+        addCssVariables();
+        
+        // Add minimal post-loading effects
+        addPostLoadEffects();
+    }, 1600); // Shorter delay to match the loading screen duration
 });
 
 // Initialize particles.js background with enhanced settings
@@ -33,17 +31,17 @@ function initParticles() {
     particlesJS('particles-js', {
         particles: {
             number: {
-                value: 100,
+                value: 60, // Reduced number of particles for better performance
                 density: {
                     enable: true,
-                    value_area: 1000
+                    value_area: 1200
                 }
             },
             color: {
                 value: ['#00ffaa', '#0a84ff', '#ff3860']
             },
             shape: {
-                type: ['circle', 'triangle', 'edge'],
+                type: ['circle', 'triangle'], // Simplified shapes
                 stroke: {
                     width: 0,
                     color: '#000000'
@@ -53,21 +51,21 @@ function initParticles() {
                 }
             },
             opacity: {
-                value: 0.6,
+                value: 0.5,
                 random: true,
                 anim: {
                     enable: true,
-                    speed: 1.5,
+                    speed: 1,
                     opacity_min: 0.1,
                     sync: false
                 }
             },
             size: {
-                value: 3,
+                value: 2.5, // Slightly smaller particles
                 random: true,
                 anim: {
                     enable: true,
-                    speed: 2,
+                    speed: 1.5, // Slower animation for better performance
                     size_min: 0.1,
                     sync: false
                 }
@@ -76,17 +74,15 @@ function initParticles() {
                 enable: true,
                 distance: 150,
                 color: '#0a84ff',
-                opacity: 0.4,
-                width: 1.2,
+                opacity: 0.3, // Reduced opacity for subtlety
+                width: 1,
                 shadow: {
-                    enable: true,
-                    color: "#00ffaa",
-                    blur: 5
+                    enable: false // Disabled shadow for better performance
                 }
             },
             move: {
                 enable: true,
-                speed: 1.5,
+                speed: 1, // Slower movement for better performance
                 direction: 'none',
                 random: true,
                 straight: false,
@@ -94,8 +90,8 @@ function initParticles() {
                 bounce: false,
                 attract: {
                     enable: true,
-                    rotateX: 600,
-                    rotateY: 1200
+                    rotateX: 300, // Reduced values for better performance
+                    rotateY: 600
                 }
             }
         },
@@ -114,16 +110,16 @@ function initParticles() {
             },
             modes: {
                 grab: {
-                    distance: 180,
+                    distance: 150, // Reduced distance for better performance
                     line_linked: {
-                        opacity: 0.8
+                        opacity: 0.6
                     }
                 },
                 bubble: {
                     distance: 400,
-                    size: 40,
+                    size: 30, // Smaller bubbles
                     duration: 2,
-                    opacity: 8,
+                    opacity: 6,
                     speed: 3
                 },
                 repulse: {
@@ -131,7 +127,7 @@ function initParticles() {
                     duration: 0.4
                 },
                 push: {
-                    particles_nb: 6
+                    particles_nb: 4 // Reduced number of particles added on click
                 },
                 remove: {
                     particles_nb: 2
@@ -456,46 +452,141 @@ function animateProfilePicture() {
 function initMobileMenu() {
     const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
     const navMenu = document.getElementById('nav-menu');
+    const navElement = document.querySelector('nav');
     const navLinks = document.querySelectorAll('#nav-menu li a');
+    const body = document.body;
 
     if (mobileMenuToggle && navMenu) {
         // Toggle menu on button click
-        mobileMenuToggle.addEventListener('click', function() {
-            navMenu.classList.toggle('active');
+        mobileMenuToggle.addEventListener('click', function(e) {
+            e.stopPropagation(); // Prevent event bubbling
+            e.preventDefault(); // Prevent default button behavior
+            
+            // Toggle active class on nav element
+            navElement.classList.toggle('active');
+            
+            // Add animation delay variables to menu items
+            if (navElement.classList.contains('active')) {
+                navLinks.forEach((link, index) => {
+                    link.parentElement.style.setProperty('--item-index', index);
+                    
+                    // Ensure visibility with a fallback timeout
+                    setTimeout(() => {
+                        link.parentElement.style.opacity = '1';
+                        link.parentElement.style.transform = 'translateX(0)';
+                        link.style.opacity = '1';
+                        link.style.visibility = 'visible';
+                    }, 500 + (index * 100)); // Staggered fallback
+                });
+            }
+            
+            // Update ARIA attributes
+            const expanded = navElement.classList.contains('active');
+            this.setAttribute('aria-expanded', expanded);
+            
+            // Toggle body scroll lock
+            if (expanded) {
+                body.style.overflow = 'hidden'; // Prevent scrolling when menu is open
+            } else {
+                body.style.overflow = ''; // Re-enable scrolling when menu is closed
+            }
 
             // Change icon based on menu state
             const icon = this.querySelector('i');
-            if (navMenu.classList.contains('active')) {
+            if (navElement.classList.contains('active')) {
                 icon.classList.remove('fa-bars');
                 icon.classList.add('fa-times');
+                
+                // Add overlay
+                if (!document.querySelector('.menu-overlay')) {
+                    const overlay = document.createElement('div');
+                    overlay.className = 'menu-overlay';
+                    overlay.style.position = 'fixed';
+                    overlay.style.top = '0';
+                    overlay.style.left = '0';
+                    overlay.style.width = '100%';
+                    overlay.style.height = '100%';
+                    overlay.style.backgroundColor = 'rgba(0,0,0,0.5)';
+                    overlay.style.zIndex = '999';
+                    overlay.style.opacity = '0';
+                    overlay.style.transition = 'opacity 0.3s ease';
+                    document.body.appendChild(overlay);
+                    
+                    // Fade in overlay
+                    setTimeout(() => {
+                        overlay.style.opacity = '1';
+                    }, 10);
+                    
+                    // Close menu when overlay is clicked
+                    overlay.addEventListener('click', closeMenu);
+                }
             } else {
                 icon.classList.remove('fa-times');
                 icon.classList.add('fa-bars');
+                
+                // Remove overlay
+                const overlay = document.querySelector('.menu-overlay');
+                if (overlay) {
+                    overlay.style.opacity = '0';
+                    setTimeout(() => {
+                        overlay.remove();
+                    }, 300);
+                }
             }
         });
 
-        // Close menu when a link is clicked
+        // Function to close the menu
+        function closeMenu() {
+            navElement.classList.remove('active');
+            body.style.overflow = ''; // Re-enable scrolling
+            
+            // Reset icon
+            const icon = mobileMenuToggle.querySelector('i');
+            icon.classList.remove('fa-times');
+            icon.classList.add('fa-bars');
+            
+            // Remove overlay
+            const overlay = document.querySelector('.menu-overlay');
+            if (overlay) {
+                overlay.style.opacity = '0';
+                setTimeout(() => {
+                    overlay.remove();
+                }, 300);
+            }
+        }
+
+        // Handle menu link clicks
         navLinks.forEach(link => {
-            link.addEventListener('click', function() {
-                navMenu.classList.remove('active');
-
-                // Reset icon
-                const icon = mobileMenuToggle.querySelector('i');
-                icon.classList.remove('fa-times');
-                icon.classList.add('fa-bars');
+            link.addEventListener('click', function(e) {
+                e.preventDefault(); // Prevent default anchor behavior
+                
+                // Get the target section ID
+                const targetId = this.getAttribute('href');
+                const targetSection = document.querySelector(targetId);
+                
+                if (targetSection) {
+                    // Close the mobile menu
+                    closeMenu();
+                    
+                    // Calculate offset based on header height
+                    let offset = 80;
+                    if (window.innerWidth <= 768) {
+                        offset = 70; // Smaller offset for mobile
+                    }
+                    
+                    // Scroll to the target section
+                    const targetPosition = targetSection.getBoundingClientRect().top + window.pageYOffset - offset;
+                    
+                    window.scrollTo({
+                        top: targetPosition,
+                        behavior: 'smooth'
+                    });
+                    
+                    // Update active class on navigation links
+                    navLinks.forEach(link => link.classList.remove('active'));
+                    this.classList.add('active');
+                }
             });
-        });
-
-        // Close menu when clicking outside
-        document.addEventListener('click', function(e) {
-            if (!navMenu.contains(e.target) && !mobileMenuToggle.contains(e.target) && navMenu.classList.contains('active')) {
-                navMenu.classList.remove('active');
-
-                // Reset icon
-                const icon = mobileMenuToggle.querySelector('i');
-                icon.classList.remove('fa-times');
-                icon.classList.add('fa-bars');
-            }
         });
 
         // Add touch-friendly enhancements for mobile
@@ -513,61 +604,87 @@ function initMobileMenu() {
                 });
             });
 
+            // Add active state for better touch feedback
+            navLinks.forEach(link => {
+                link.addEventListener('touchstart', function() {
+                    this.classList.add('touch-active');
+                });
+                
+                link.addEventListener('touchend', function() {
+                    this.classList.remove('touch-active');
+                });
+            });
+
             // Disable hover effects that might cause issues on touch devices
             document.body.classList.add('touch-device');
         }
+        
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 768 && navElement.classList.contains('active')) {
+                closeMenu();
+            }
+        });
     }
 }
 
 // Initialize smooth scrolling for a better user experience
 function initSmoothScrolling() {
-    // Check if the browser supports smooth scrolling natively
-    if ('scrollBehavior' in document.documentElement.style) {
-        return; // Browser already supports smooth scrolling
-    }
-
-    // For browsers that don't support smooth scrolling natively
-    document.addEventListener('wheel', function(e) {
-        if (e.ctrlKey) return; // Don't interfere with zoom
-
-        e.preventDefault();
-
-        const delta = e.deltaY;
-        const currentScroll = window.pageYOffset;
-
-        // Smooth scroll with custom easing
-        window.scrollTo({
-            top: currentScroll + delta,
-            behavior: 'smooth'
-        });
-    }, { passive: false });
-
-    // Smooth scroll for keyboard navigation
-    document.addEventListener('keydown', function(e) {
-        // Space, Page Down, Page Up, End, Home, Arrow Down, Arrow Up
-        const keysMap = {
-            'Space': ' ',
-            'PageDown': 'PageDown',
-            'PageUp': 'PageUp',
-            'End': 'End',
-            'Home': 'Home',
-            'ArrowUp': 'ArrowUp',
-            'ArrowDown': 'ArrowDown'
-        };
-
-        if (Object.values(keysMap).includes(e.key)) {
+    // Add smooth scrolling to all anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
             e.preventDefault();
-
+            
+            // Get the target element
+            const targetId = this.getAttribute('href');
+            if (targetId === '#') return; // Skip if it's just a "#" link
+            
+            const targetElement = document.querySelector(targetId);
+            if (!targetElement) return; // Skip if target doesn't exist
+            
+            // Calculate offset based on header height and device
+            let offset = 80;
+            if (window.innerWidth <= 768) {
+                offset = 70; // Smaller offset for mobile
+            }
+            
+            // Get the target's position
+            const targetPosition = targetElement.getBoundingClientRect().top + window.pageYOffset - offset;
+            
+            // Smooth scroll to target
+            window.scrollTo({
+                top: targetPosition,
+                behavior: 'smooth'
+            });
+        });
+    });
+    
+    // Only add these event listeners if native smooth scrolling is not supported
+    if (!('scrollBehavior' in document.documentElement.style)) {
+        // Smooth scroll for keyboard navigation (optimized)
+        document.addEventListener('keydown', function(e) {
+            // Only handle navigation keys
+            if (!['Space', ' ', 'PageDown', 'PageUp', 'End', 'Home', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+                return;
+            }
+            
+            // Don't interfere with inputs, textareas, etc.
+            if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
+                return;
+            }
+            
+            e.preventDefault();
+            
             let scrollAmount = 0;
             const currentScroll = window.pageYOffset;
-
+            
             switch (e.key) {
                 case ' ': // Space
                 case 'PageDown':
-                    scrollAmount = window.innerHeight * 0.9;
+                    scrollAmount = window.innerHeight * 0.8;
                     break;
                 case 'PageUp':
-                    scrollAmount = -window.innerHeight * 0.9;
+                    scrollAmount = -window.innerHeight * 0.8;
                     break;
                 case 'End':
                     scrollAmount = document.body.scrollHeight - currentScroll;
@@ -576,19 +693,64 @@ function initSmoothScrolling() {
                     scrollAmount = -currentScroll;
                     break;
                 case 'ArrowUp':
-                    scrollAmount = -100;
+                    scrollAmount = -80;
                     break;
                 case 'ArrowDown':
-                    scrollAmount = 100;
+                    scrollAmount = 80;
                     break;
             }
-
+            
             window.scrollTo({
                 top: currentScroll + scrollAmount,
                 behavior: 'smooth'
             });
-        }
-    }, { passive: false });
+        });
+    }
+}
+
+// Initialize back to top button
+function initBackToTop() {
+    const backToTopButton = document.getElementById('back-to-top');
+    
+    if (backToTopButton) {
+        // Show/hide button based on scroll position
+        window.addEventListener('scroll', function() {
+            if (window.pageYOffset > 300) {
+                backToTopButton.classList.add('visible');
+            } else {
+                backToTopButton.classList.remove('visible');
+            }
+        });
+        
+        // Scroll to top when button is clicked
+        backToTopButton.addEventListener('click', function() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+    }
+}
+
+// Add minimal loading screen animation
+function addPageLoadingAnimation() {
+    const loadingScreen = document.getElementById('loading-screen');
+    
+    // Hide body overflow during loading
+    document.body.style.overflow = 'hidden';
+    
+    // Hide loading screen after a short delay (1.5 seconds)
+    setTimeout(() => {
+        loadingScreen.classList.add('hidden');
+        
+        // Enable scrolling again
+        document.body.style.overflow = '';
+        
+        // Remove loading screen from DOM after transition
+        setTimeout(() => {
+            loadingScreen.style.display = 'none';
+        }, 500);
+    }, 1500);
 }
 
 // Add CSS variables for staggered animations and ensure content visibility
@@ -639,4 +801,35 @@ function addCssVariables() {
             content.style.transform = 'translateX(0)';
         }
     });
+}
+
+// Add minimal post-loading effects
+function addPostLoadEffects() {
+    // Add a subtle entrance animation to the hero section
+    const heroSection = document.querySelector('.hero');
+    if (heroSection) {
+        heroSection.style.animation = 'fadeInUp 0.8s ease forwards';
+    }
+    
+    // Add a subtle animation to the navigation links
+    const navLinks = document.querySelectorAll('nav ul li a');
+    navLinks.forEach((link, index) => {
+        link.style.opacity = '0';
+        link.style.transition = 'opacity 0.3s ease';
+        link.style.transitionDelay = `${0.1 + (index * 0.05)}s`;
+        
+        setTimeout(() => {
+            link.style.opacity = '1';
+        }, 100);
+    });
+    
+    // Add a subtle animation to the particles background
+    const particles = document.querySelector('#particles-js');
+    if (particles) {
+        particles.style.opacity = '0';
+        particles.style.transition = 'opacity 0.8s ease';
+        setTimeout(() => {
+            particles.style.opacity = '1';
+        }, 200);
+    }
 }
